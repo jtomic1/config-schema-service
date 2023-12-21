@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "proto/";
+
+package configschema;
+
+import "google/protobuf/timestamp.proto";
+
+service ConfigSchemaService {
+  rpc SaveConfigSchema(ConfigSchemaSaveRequest) returns (ConfigSchemaSaveResponse);
+}
+
+message User {
+  string id = 1;
+  string username = 2;
+}
+
+message ConfigSchemaSaveRequest {
+  google.protobuf.Timestamp creationTime = 1;
+  User user = 2;
+  string namespace = 3;
+  string app_name = 4;
+  string configuration_name = 5;
+  string version = 6;
+  string arch = 7;
+  string json_schema = 8;
+}
+
+message ConfigSchemaSaveResponse {
+  int32 status = 1;
+  string message = 2;
+}
