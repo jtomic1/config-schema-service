@@ -6,8 +6,6 @@ import (
 	"time"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
-
-	pb "github.com/jtomic1/config-schema-service/proto"
 )
 
 var (
@@ -36,18 +34,32 @@ func (repo *EtcdRepository) Close() {
 	repo.client.Close()
 }
 
-func getConfigSchemaKey(req *pb.ConfigSchemaSaveRequest) string {
-	return req.GetNamespace() + "-" + req.GetAppName() + "-" + req.GetConfigurationName() + "-" + req.GetVersion() + "-" + req.GetArch()
+func (repo *EtcdRepository) SaveConfigSchema(key string, schema string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	_, err := repo.client.Put(ctx, key, schema)
+	cancel()
+	return err
 }
 
-func (repo *EtcdRepository) SaveConfigSchema(req *pb.ConfigSchemaSaveRequest) error {
+func (repo *EtcdRepository) GetConfigSchema(key string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	key := getConfigSchemaKey(req)
-	resp, err := repo.client.Put(ctx, key, req.GetJsonSchema())
+	resp, err := repo.client.Get(ctx, key)
 	cancel()
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
-	log.Println(resp)
-	return nil
+	if len(resp.Kvs) == 0 {
+		return "", nil
+	}
+	return string(resp.Kvs[0].Value), nil
+}
+
+func (repo *EtcdRepository) DeleteConfigSchema(key string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	res, err := repo.client.Delete(ctx, key)
+	cancel()
+	if res.Deleted > 0 {
+		return nil
+	}
+	return err
 }
