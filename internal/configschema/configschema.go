@@ -5,6 +5,8 @@ import (
 
 	"github.com/jtomic1/config-schema-service/internal/repository"
 	pb "github.com/jtomic1/config-schema-service/proto"
+	"github.com/xeipuuv/gojsonschema"
+	"sigs.k8s.io/yaml"
 )
 
 type Server struct {
@@ -93,4 +95,55 @@ func (s *Server) DeleteConfigSchema(ctx context.Context, in *pb.DeleteConfigSche
 		Status:  status,
 		Message: message,
 	}, nil
+}
+
+func (s *Server) ValidateConfiguration(ctx context.Context, in *pb.ValidateConfigurationRequest) (*pb.ValidateConfigurationResponse, error) {
+	repoClient, err := repository.NewClient()
+	defer repoClient.Close()
+	var status int32 = 0
+	message := ""
+	if err != nil {
+		status = 13
+		message = "Error while instantiating database client!"
+	}
+	key := getConfigSchemaKey(in.GetSchemaDetails())
+	schemaData, err := repoClient.GetConfigSchema(key)
+	if err != nil {
+		status = 13
+		message = "Error while retrieving schema!"
+	}
+	validationResult, err := validateConfiguration(in.GetConfiguration(), schemaData.GetSchema())
+	if err != nil {
+		message = "Error while validating configuration!"
+	}
+	if validationResult.Valid() && message == "" {
+		message = "The configuration is valid!"
+	} else {
+		message = validationResult.Errors()[0].String()
+	}
+
+	return &pb.ValidateConfigurationResponse{
+		Status:  status,
+		Message: message,
+		IsValid: validationResult.Valid(),
+	}, nil
+}
+
+func validateConfiguration(configuration string, schema string) (*gojsonschema.Result, error) {
+	configurationJson, err := yaml.YAMLToJSON([]byte(configuration))
+	if err != nil {
+		return nil, err
+	}
+	schemaJson, err := yaml.YAMLToJSON([]byte(schema))
+	if err != nil {
+		return nil, err
+	}
+	configLoader := gojsonschema.NewStringLoader(string(configurationJson))
+	schemaLoader := gojsonschema.NewStringLoader(string(schemaJson))
+	result, err := gojsonschema.Validate(schemaLoader, configLoader)
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
 }
