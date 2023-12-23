@@ -10,6 +10,7 @@ service ConfigSchemaService {
   rpc SaveConfigSchema(SaveConfigSchemaRequest) returns (SaveConfigSchemaResponse);
   rpc GetConfigSchema(GetConfigSchemaRequest) returns (GetConfigSchemaResponse);
   rpc DeleteConfigSchema(DeleteConfigSchemaRequest) returns (DeleteConfigSchemaResponse);
+  rpc ValidateConfiguration(ValidateConfigurationRequest) returns (ValidateConfigurationResponse);
 }
 
 message User {
@@ -17,13 +18,22 @@ message User {
   string email = 2;
 }
 
+message ConfigSchemaDetails {
+  string namespace = 1;
+  string schema_name = 2;
+  string version = 3;
+}
+
+message ConfigSchemaData {
+  User user = 1;
+  string schema = 2;
+  google.protobuf.Timestamp creationTime = 3;
+}
+
 message SaveConfigSchemaRequest {
-  google.protobuf.Timestamp creationTime = 1;
-  User user = 2;
-  string namespace = 3;
-  string configuration_name = 4;
-  string version = 5;
-  string schema = 6;
+  User user = 1;
+  ConfigSchemaDetails schemaDetails = 2;
+  string schema = 3;
 }
 
 message SaveConfigSchemaResponse {
@@ -32,11 +42,8 @@ message SaveConfigSchemaResponse {
 }
 
 message DeleteConfigSchemaRequest { 
-  google.protobuf.Timestamp creationTime = 1;
-  User user = 2;
-  string namespace = 3;
-  string configuration_name = 4;
-  string version = 5;
+  User user = 1;
+  ConfigSchemaDetails schemaDetails = 2;
 }
 
 message DeleteConfigSchemaResponse {
@@ -45,15 +52,24 @@ message DeleteConfigSchemaResponse {
 }
 
 message GetConfigSchemaRequest {
-  google.protobuf.Timestamp creationTime = 1;
-  User user = 2;
-  string namespace = 3;
-  string configuration_name = 4;
-  string version = 5;
+  User user = 1;
+  ConfigSchemaDetails schemaDetails = 2;
 }
 
 message GetConfigSchemaResponse  {
   int32 status = 1;
   string message = 2;
-  string schema = 3;
+  ConfigSchemaData schemaData = 3;
+}
+
+message ValidateConfigurationRequest {
+  User user = 1;
+  ConfigSchemaDetails schemaDetails  = 2;
+  string configuration = 3;
+}
+
+message ValidateConfigurationResponse {
+  int32 status = 1;
+  string message = 2;
+  bool is_valid = 3;
 }

@@ -13,7 +13,7 @@ type Server struct {
 
 type ConfigSchemaRequest interface {
 	GetNamespace() string
-	GetConfigurationName() string
+	GetSchemaName() string
 	GetVersion() string
 }
 
@@ -22,7 +22,7 @@ func NewServer() *Server {
 }
 
 func getConfigSchemaKey(req ConfigSchemaRequest) string {
-	return req.GetNamespace() + "-" + req.GetConfigurationName() + "-" + req.GetVersion()
+	return req.GetNamespace() + "-" + req.GetSchemaName() + "-" + req.GetVersion()
 }
 
 func (s *Server) SaveConfigSchema(ctx context.Context, in *pb.SaveConfigSchemaRequest) (*pb.SaveConfigSchemaResponse, error) {
@@ -34,11 +34,14 @@ func (s *Server) SaveConfigSchema(ctx context.Context, in *pb.SaveConfigSchemaRe
 		status = 13
 		message = "Error while instantiating database client!"
 	}
-	if err := repoClient.SaveConfigSchema(getConfigSchemaKey(in), in.GetSchema()); err != nil {
+	err = repoClient.SaveConfigSchema(getConfigSchemaKey(in.GetSchemaDetails()), in.GetUser(), in.GetSchema())
+	if err != nil {
 		status = 13
 		message = "Error while saving schema!"
 	}
-	message = "Schema saved successfully!"
+	if message == "" {
+		message = "Schema saved successfully!"
+	}
 	return &pb.SaveConfigSchemaResponse{
 		Status:  status,
 		Message: message,
@@ -49,26 +52,26 @@ func (s *Server) GetConfigSchema(ctx context.Context, in *pb.GetConfigSchemaRequ
 	repoClient, err := repository.NewClient()
 	defer repoClient.Close()
 	var status int32 = 0
-	message, schema := "", ""
+	message := ""
 	if err != nil {
 		status = 13
 		message = "Error while instantiating database client!"
 	}
-	key := getConfigSchemaKey(in)
-	schema, err = repoClient.GetConfigSchema(key)
+	key := getConfigSchemaKey(in.GetSchemaDetails())
+	schemaData, err := repoClient.GetConfigSchema(key)
 	if err != nil {
 		status = 13
 		message = "Error while retrieving schema!"
 	}
-	if schema == "" {
+	if schemaData == nil {
 		message = "No schema with key '" + key + "' found!"
 	} else {
 		message = "Schema retrieved successfully!"
 	}
 	return &pb.GetConfigSchemaResponse{
-		Status:  status,
-		Message: message,
-		Schema:  schema,
+		Status:     status,
+		Message:    message,
+		SchemaData: schemaData,
 	}, nil
 }
 
@@ -81,7 +84,7 @@ func (s *Server) DeleteConfigSchema(ctx context.Context, in *pb.DeleteConfigSche
 		status = 13
 		message = "Error while instantiating database client!"
 	}
-	if err := repoClient.DeleteConfigSchema(getConfigSchemaKey(in)); err != nil {
+	if err := repoClient.DeleteConfigSchema(getConfigSchemaKey(in.GetSchemaDetails())); err != nil {
 		status = 13
 		message = "Error while deleting schema!"
 	}
