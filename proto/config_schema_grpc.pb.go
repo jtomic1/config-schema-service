@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ConfigSchemaService_SaveConfigSchema_FullMethodName      = "/configschema.ConfigSchemaService/SaveConfigSchema"
-	ConfigSchemaService_GetConfigSchema_FullMethodName       = "/configschema.ConfigSchemaService/GetConfigSchema"
-	ConfigSchemaService_DeleteConfigSchema_FullMethodName    = "/configschema.ConfigSchemaService/DeleteConfigSchema"
-	ConfigSchemaService_ValidateConfiguration_FullMethodName = "/configschema.ConfigSchemaService/ValidateConfiguration"
+	ConfigSchemaService_SaveConfigSchema_FullMethodName        = "/configschema.ConfigSchemaService/SaveConfigSchema"
+	ConfigSchemaService_GetConfigSchema_FullMethodName         = "/configschema.ConfigSchemaService/GetConfigSchema"
+	ConfigSchemaService_DeleteConfigSchema_FullMethodName      = "/configschema.ConfigSchemaService/DeleteConfigSchema"
+	ConfigSchemaService_ValidateConfiguration_FullMethodName   = "/configschema.ConfigSchemaService/ValidateConfiguration"
+	ConfigSchemaService_GetConfigSchemaVersions_FullMethodName = "/configschema.ConfigSchemaService/GetConfigSchemaVersions"
 )
 
 // ConfigSchemaServiceClient is the client API for ConfigSchemaService service.
@@ -33,6 +34,7 @@ type ConfigSchemaServiceClient interface {
 	GetConfigSchema(ctx context.Context, in *GetConfigSchemaRequest, opts ...grpc.CallOption) (*GetConfigSchemaResponse, error)
 	DeleteConfigSchema(ctx context.Context, in *DeleteConfigSchemaRequest, opts ...grpc.CallOption) (*DeleteConfigSchemaResponse, error)
 	ValidateConfiguration(ctx context.Context, in *ValidateConfigurationRequest, opts ...grpc.CallOption) (*ValidateConfigurationResponse, error)
+	GetConfigSchemaVersions(ctx context.Context, in *ConfigSchemaVersionsRequest, opts ...grpc.CallOption) (*ConfigSchemaVersionsResponse, error)
 }
 
 type configSchemaServiceClient struct {
@@ -79,6 +81,15 @@ func (c *configSchemaServiceClient) ValidateConfiguration(ctx context.Context, i
 	return out, nil
 }
 
+func (c *configSchemaServiceClient) GetConfigSchemaVersions(ctx context.Context, in *ConfigSchemaVersionsRequest, opts ...grpc.CallOption) (*ConfigSchemaVersionsResponse, error) {
+	out := new(ConfigSchemaVersionsResponse)
+	err := c.cc.Invoke(ctx, ConfigSchemaService_GetConfigSchemaVersions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfigSchemaServiceServer is the server API for ConfigSchemaService service.
 // All implementations must embed UnimplementedConfigSchemaServiceServer
 // for forward compatibility
@@ -87,6 +98,7 @@ type ConfigSchemaServiceServer interface {
 	GetConfigSchema(context.Context, *GetConfigSchemaRequest) (*GetConfigSchemaResponse, error)
 	DeleteConfigSchema(context.Context, *DeleteConfigSchemaRequest) (*DeleteConfigSchemaResponse, error)
 	ValidateConfiguration(context.Context, *ValidateConfigurationRequest) (*ValidateConfigurationResponse, error)
+	GetConfigSchemaVersions(context.Context, *ConfigSchemaVersionsRequest) (*ConfigSchemaVersionsResponse, error)
 	mustEmbedUnimplementedConfigSchemaServiceServer()
 }
 
@@ -105,6 +117,9 @@ func (UnimplementedConfigSchemaServiceServer) DeleteConfigSchema(context.Context
 }
 func (UnimplementedConfigSchemaServiceServer) ValidateConfiguration(context.Context, *ValidateConfigurationRequest) (*ValidateConfigurationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateConfiguration not implemented")
+}
+func (UnimplementedConfigSchemaServiceServer) GetConfigSchemaVersions(context.Context, *ConfigSchemaVersionsRequest) (*ConfigSchemaVersionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConfigSchemaVersions not implemented")
 }
 func (UnimplementedConfigSchemaServiceServer) mustEmbedUnimplementedConfigSchemaServiceServer() {}
 
@@ -191,6 +206,24 @@ func _ConfigSchemaService_ValidateConfiguration_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConfigSchemaService_GetConfigSchemaVersions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfigSchemaVersionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigSchemaServiceServer).GetConfigSchemaVersions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigSchemaService_GetConfigSchemaVersions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigSchemaServiceServer).GetConfigSchemaVersions(ctx, req.(*ConfigSchemaVersionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConfigSchemaService_ServiceDesc is the grpc.ServiceDesc for ConfigSchemaService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -213,6 +246,10 @@ var ConfigSchemaService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValidateConfiguration",
 			Handler:    _ConfigSchemaService_ValidateConfiguration_Handler,
+		},
+		{
+			MethodName: "GetConfigSchemaVersions",
+			Handler:    _ConfigSchemaService_GetConfigSchemaVersions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
