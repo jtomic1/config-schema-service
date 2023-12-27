@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"sort"
+	"strings"
 	"time"
 
 	pb "github.com/jtomic1/config-schema-service/proto"
@@ -68,10 +71,49 @@ func (repo *EtcdRepository) GetConfigSchema(key string) (*pb.ConfigSchemaData, e
 
 func (repo *EtcdRepository) DeleteConfigSchema(key string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 	res, err := repo.client.Delete(ctx, key)
-	cancel()
+	if err != nil {
+		return err
+	}
 	if res.Deleted > 0 {
 		return nil
 	}
-	return err
+	return errors.New("No schema with key '" + key + "' found!")
+}
+
+func (repo *EtcdRepository) GetSchemasByPrefix(prefix string) ([]*pb.ConfigSchema, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	res, err := repo.client.Get(ctx, prefix, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	} else if res.Count == 0 {
+		return nil, nil
+	}
+	schemas := make([]*pb.ConfigSchema, res.Count)
+	for i, schemaKv := range res.Kvs {
+		schemaDetails := getSchemaDetailsFromKey(string(schemaKv.Key))
+		var schemaData pb.ConfigSchemaData
+		if err := json.Unmarshal(schemaKv.Value, &schemaData); err != nil {
+			return nil, err
+		}
+		schemas[i] = &pb.ConfigSchema{
+			SchemaDetails: schemaDetails,
+			SchemaData:    &schemaData,
+		}
+	}
+	sort.Slice(schemas, func(i, j int) bool {
+		return schemas[i].GetSchemaData().GetCreationTime().AsTime().Before(schemas[j].GetSchemaData().GetCreationTime().AsTime())
+	})
+	return schemas, nil
+}
+
+func getSchemaDetailsFromKey(key string) *pb.ConfigSchemaDetails {
+	tokens := strings.Split(key, "-")
+	return &pb.ConfigSchemaDetails{
+		Namespace:  tokens[0],
+		SchemaName: tokens[1],
+		Version:    tokens[2],
+	}
 }
