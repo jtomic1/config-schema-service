@@ -11,6 +11,7 @@ import (
 	pb "github.com/jtomic1/config-schema-service/proto"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -39,9 +40,20 @@ func (repo *EtcdRepository) Close() {
 func (repo *EtcdRepository) SaveConfigSchema(key string, user *pb.User, schema string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+	res, err := repo.client.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if res.Count > 0 {
+		return errors.New("Key '" + key + "' already exists!")
+	}
+	schemaJson, err := yaml.YAMLToJSON([]byte(schema))
+	if err != nil {
+		return err
+	}
 	schemaData := &pb.ConfigSchemaData{
 		User:         user,
-		Schema:       schema,
+		Schema:       string(schemaJson),
 		CreationTime: timestamppb.New(time.Now()),
 	}
 	serializedData, err := json.Marshal(schemaData)
@@ -66,6 +78,11 @@ func (repo *EtcdRepository) GetConfigSchema(key string) (*pb.ConfigSchemaData, e
 	if err := json.Unmarshal(resp.Kvs[0].Value, &schemaData); err != nil {
 		return nil, err
 	}
+	schemaYaml, err := yaml.JSONToYAML([]byte(schemaData.GetSchema()))
+	if err != nil {
+		return nil, err
+	}
+	schemaData.Schema = string(schemaYaml)
 	return &schemaData, nil
 }
 
@@ -98,6 +115,11 @@ func (repo *EtcdRepository) GetSchemasByPrefix(prefix string) ([]*pb.ConfigSchem
 		if err := json.Unmarshal(schemaKv.Value, &schemaData); err != nil {
 			return nil, err
 		}
+		schemaYaml, err := yaml.JSONToYAML([]byte(schemaData.GetSchema()))
+		if err != nil {
+			return nil, err
+		}
+		schemaData.Schema = string(schemaYaml)
 		schemas[i] = &pb.ConfigSchema{
 			SchemaDetails: schemaDetails,
 			SchemaData:    &schemaData,
@@ -110,7 +132,7 @@ func (repo *EtcdRepository) GetSchemasByPrefix(prefix string) ([]*pb.ConfigSchem
 }
 
 func getSchemaDetailsFromKey(key string) *pb.ConfigSchemaDetails {
-	tokens := strings.Split(key, "-")
+	tokens := strings.Split(key, "/")
 	return &pb.ConfigSchemaDetails{
 		Namespace:  tokens[0],
 		SchemaName: tokens[1],

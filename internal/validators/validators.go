@@ -2,8 +2,11 @@ package validators
 
 import (
 	"errors"
+	"strings"
 
 	pb "github.com/jtomic1/config-schema-service/proto"
+	"github.com/xeipuuv/gojsonschema"
+	"sigs.k8s.io/yaml"
 )
 
 func IsUserValid(user *pb.User) (bool, error) {
@@ -21,6 +24,15 @@ func IsSchemaValid(schema string) (bool, error) {
 	if schema == "" {
 		return false, errors.New("Schema cannot be empty!")
 	}
+	schemaJson, err := yaml.YAMLToJSON([]byte(schema))
+	if err != nil {
+		return false, err
+	}
+	loader := gojsonschema.NewStringLoader(string(schemaJson))
+	_, schemaErr := gojsonschema.NewSchema(loader)
+	if schemaErr != nil {
+		return false, schemaErr
+	}
 	return true, nil
 }
 
@@ -31,15 +43,17 @@ func IsConfigurationValid(configuration string) (bool, error) {
 	return true, nil
 }
 
-func AreSchemaDetailsValid(schemaDetails *pb.ConfigSchemaDetails) (bool, error) {
+func AreSchemaDetailsValid(schemaDetails *pb.ConfigSchemaDetails, isVersionRequired bool) (bool, error) {
 	if schemaDetails == nil {
 		return false, errors.New("Schema details cannot be empty!")
-	} else if schemaDetails.Namespace == "" {
+	} else if schemaDetails.GetNamespace() == "" {
 		return false, errors.New("Schema namespace cannot be empty!")
-	} else if schemaDetails.SchemaName == "" {
+	} else if schemaDetails.GetSchemaName() == "" {
 		return false, errors.New("Schema name cannot be empty!")
-	} else if schemaDetails.Version == "" {
+	} else if isVersionRequired && schemaDetails.GetVersion() == "" {
 		return false, errors.New("Schema version cannot be empty!")
+	} else if strings.Contains(schemaDetails.GetNamespace(), "/") || strings.Contains(schemaDetails.GetSchemaName(), "/") || strings.Contains(schemaDetails.GetVersion(), "/") {
+		return false, errors.New("Schema details must not contain '/'!")
 	}
 	return true, nil
 }
@@ -49,7 +63,7 @@ func IsSaveSchemaRequestValid(saveRequest *pb.SaveConfigSchemaRequest) (bool, er
 	if userErr != nil {
 		return false, userErr
 	}
-	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(saveRequest.GetSchemaDetails())
+	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(saveRequest.GetSchemaDetails(), true)
 	if schemaDetailsErr != nil {
 		return false, schemaDetailsErr
 	}
@@ -66,7 +80,7 @@ func IsGetSchemaRequestValid(getRequest *pb.GetConfigSchemaRequest) (bool, error
 	if userErr != nil {
 		return false, userErr
 	}
-	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(getRequest.GetSchemaDetails())
+	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(getRequest.GetSchemaDetails(), true)
 	if schemaDetailsErr != nil {
 		return false, schemaDetailsErr
 	}
@@ -80,7 +94,7 @@ func IsDeleteSchemaRequestValid(deleteRequest *pb.DeleteConfigSchemaRequest) (bo
 	if userErr != nil {
 		return false, userErr
 	}
-	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(deleteRequest.GetSchemaDetails())
+	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(deleteRequest.GetSchemaDetails(), true)
 	if schemaDetailsErr != nil {
 		return false, schemaDetailsErr
 	}
@@ -94,7 +108,7 @@ func IsValidateConfigurationRequestValid(validateRequest *pb.ValidateConfigurati
 	if userErr != nil {
 		return false, userErr
 	}
-	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(validateRequest.GetSchemaDetails())
+	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(validateRequest.GetSchemaDetails(), true)
 	if schemaDetailsErr != nil {
 		return false, schemaDetailsErr
 	}
@@ -111,7 +125,7 @@ func IsGetConfigSchemaVersionsValid(versionsRequest *pb.ConfigSchemaVersionsRequ
 	if userErr != nil {
 		return false, userErr
 	}
-	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(versionsRequest.GetSchemaDetails())
+	schemaDetailsValid, schemaDetailsErr := AreSchemaDetailsValid(versionsRequest.GetSchemaDetails(), false)
 	if schemaDetailsErr != nil {
 		return false, schemaDetailsErr
 	}

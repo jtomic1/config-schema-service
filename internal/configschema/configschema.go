@@ -25,11 +25,11 @@ func NewServer() *Server {
 }
 
 func getConfigSchemaKey(req ConfigSchemaRequest) string {
-	return req.GetNamespace() + "-" + req.GetSchemaName() + "-" + req.GetVersion()
+	return req.GetNamespace() + "/" + req.GetSchemaName() + "/" + req.GetVersion()
 }
 
 func getConfigSchemaPrefix(req ConfigSchemaRequest) string {
-	return req.GetNamespace() + "-" + req.GetSchemaName()
+	return req.GetNamespace() + "/" + req.GetSchemaName()
 }
 
 func (s *Server) SaveConfigSchema(ctx context.Context, in *pb.SaveConfigSchemaRequest) (*pb.SaveConfigSchemaResponse, error) {
@@ -52,7 +52,7 @@ func (s *Server) SaveConfigSchema(ctx context.Context, in *pb.SaveConfigSchemaRe
 	if err != nil {
 		return &pb.SaveConfigSchemaResponse{
 			Status:  13,
-			Message: "Error while saving schema!",
+			Message: err.Error(),
 		}, nil
 	}
 	return &pb.SaveConfigSchemaResponse{
