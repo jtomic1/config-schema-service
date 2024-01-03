@@ -19,14 +19,22 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ConfigSchemaService_SaveConfigSchema_FullMethodName = "/configschema.ConfigSchemaService/SaveConfigSchema"
+	ConfigSchemaService_SaveConfigSchema_FullMethodName        = "/configschema.ConfigSchemaService/SaveConfigSchema"
+	ConfigSchemaService_GetConfigSchema_FullMethodName         = "/configschema.ConfigSchemaService/GetConfigSchema"
+	ConfigSchemaService_DeleteConfigSchema_FullMethodName      = "/configschema.ConfigSchemaService/DeleteConfigSchema"
+	ConfigSchemaService_ValidateConfiguration_FullMethodName   = "/configschema.ConfigSchemaService/ValidateConfiguration"
+	ConfigSchemaService_GetConfigSchemaVersions_FullMethodName = "/configschema.ConfigSchemaService/GetConfigSchemaVersions"
 )
 
 // ConfigSchemaServiceClient is the client API for ConfigSchemaService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConfigSchemaServiceClient interface {
-	SaveConfigSchema(ctx context.Context, in *ConfigSchemaSaveRequest, opts ...grpc.CallOption) (*ConfigSchemaSaveResponse, error)
+	SaveConfigSchema(ctx context.Context, in *SaveConfigSchemaRequest, opts ...grpc.CallOption) (*SaveConfigSchemaResponse, error)
+	GetConfigSchema(ctx context.Context, in *GetConfigSchemaRequest, opts ...grpc.CallOption) (*GetConfigSchemaResponse, error)
+	DeleteConfigSchema(ctx context.Context, in *DeleteConfigSchemaRequest, opts ...grpc.CallOption) (*DeleteConfigSchemaResponse, error)
+	ValidateConfiguration(ctx context.Context, in *ValidateConfigurationRequest, opts ...grpc.CallOption) (*ValidateConfigurationResponse, error)
+	GetConfigSchemaVersions(ctx context.Context, in *ConfigSchemaVersionsRequest, opts ...grpc.CallOption) (*ConfigSchemaVersionsResponse, error)
 }
 
 type configSchemaServiceClient struct {
@@ -37,9 +45,45 @@ func NewConfigSchemaServiceClient(cc grpc.ClientConnInterface) ConfigSchemaServi
 	return &configSchemaServiceClient{cc}
 }
 
-func (c *configSchemaServiceClient) SaveConfigSchema(ctx context.Context, in *ConfigSchemaSaveRequest, opts ...grpc.CallOption) (*ConfigSchemaSaveResponse, error) {
-	out := new(ConfigSchemaSaveResponse)
+func (c *configSchemaServiceClient) SaveConfigSchema(ctx context.Context, in *SaveConfigSchemaRequest, opts ...grpc.CallOption) (*SaveConfigSchemaResponse, error) {
+	out := new(SaveConfigSchemaResponse)
 	err := c.cc.Invoke(ctx, ConfigSchemaService_SaveConfigSchema_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configSchemaServiceClient) GetConfigSchema(ctx context.Context, in *GetConfigSchemaRequest, opts ...grpc.CallOption) (*GetConfigSchemaResponse, error) {
+	out := new(GetConfigSchemaResponse)
+	err := c.cc.Invoke(ctx, ConfigSchemaService_GetConfigSchema_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configSchemaServiceClient) DeleteConfigSchema(ctx context.Context, in *DeleteConfigSchemaRequest, opts ...grpc.CallOption) (*DeleteConfigSchemaResponse, error) {
+	out := new(DeleteConfigSchemaResponse)
+	err := c.cc.Invoke(ctx, ConfigSchemaService_DeleteConfigSchema_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configSchemaServiceClient) ValidateConfiguration(ctx context.Context, in *ValidateConfigurationRequest, opts ...grpc.CallOption) (*ValidateConfigurationResponse, error) {
+	out := new(ValidateConfigurationResponse)
+	err := c.cc.Invoke(ctx, ConfigSchemaService_ValidateConfiguration_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *configSchemaServiceClient) GetConfigSchemaVersions(ctx context.Context, in *ConfigSchemaVersionsRequest, opts ...grpc.CallOption) (*ConfigSchemaVersionsResponse, error) {
+	out := new(ConfigSchemaVersionsResponse)
+	err := c.cc.Invoke(ctx, ConfigSchemaService_GetConfigSchemaVersions_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +94,11 @@ func (c *configSchemaServiceClient) SaveConfigSchema(ctx context.Context, in *Co
 // All implementations must embed UnimplementedConfigSchemaServiceServer
 // for forward compatibility
 type ConfigSchemaServiceServer interface {
-	SaveConfigSchema(context.Context, *ConfigSchemaSaveRequest) (*ConfigSchemaSaveResponse, error)
+	SaveConfigSchema(context.Context, *SaveConfigSchemaRequest) (*SaveConfigSchemaResponse, error)
+	GetConfigSchema(context.Context, *GetConfigSchemaRequest) (*GetConfigSchemaResponse, error)
+	DeleteConfigSchema(context.Context, *DeleteConfigSchemaRequest) (*DeleteConfigSchemaResponse, error)
+	ValidateConfiguration(context.Context, *ValidateConfigurationRequest) (*ValidateConfigurationResponse, error)
+	GetConfigSchemaVersions(context.Context, *ConfigSchemaVersionsRequest) (*ConfigSchemaVersionsResponse, error)
 	mustEmbedUnimplementedConfigSchemaServiceServer()
 }
 
@@ -58,8 +106,20 @@ type ConfigSchemaServiceServer interface {
 type UnimplementedConfigSchemaServiceServer struct {
 }
 
-func (UnimplementedConfigSchemaServiceServer) SaveConfigSchema(context.Context, *ConfigSchemaSaveRequest) (*ConfigSchemaSaveResponse, error) {
+func (UnimplementedConfigSchemaServiceServer) SaveConfigSchema(context.Context, *SaveConfigSchemaRequest) (*SaveConfigSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveConfigSchema not implemented")
+}
+func (UnimplementedConfigSchemaServiceServer) GetConfigSchema(context.Context, *GetConfigSchemaRequest) (*GetConfigSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConfigSchema not implemented")
+}
+func (UnimplementedConfigSchemaServiceServer) DeleteConfigSchema(context.Context, *DeleteConfigSchemaRequest) (*DeleteConfigSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteConfigSchema not implemented")
+}
+func (UnimplementedConfigSchemaServiceServer) ValidateConfiguration(context.Context, *ValidateConfigurationRequest) (*ValidateConfigurationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateConfiguration not implemented")
+}
+func (UnimplementedConfigSchemaServiceServer) GetConfigSchemaVersions(context.Context, *ConfigSchemaVersionsRequest) (*ConfigSchemaVersionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConfigSchemaVersions not implemented")
 }
 func (UnimplementedConfigSchemaServiceServer) mustEmbedUnimplementedConfigSchemaServiceServer() {}
 
@@ -75,7 +135,7 @@ func RegisterConfigSchemaServiceServer(s grpc.ServiceRegistrar, srv ConfigSchema
 }
 
 func _ConfigSchemaService_SaveConfigSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ConfigSchemaSaveRequest)
+	in := new(SaveConfigSchemaRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -87,7 +147,79 @@ func _ConfigSchemaService_SaveConfigSchema_Handler(srv interface{}, ctx context.
 		FullMethod: ConfigSchemaService_SaveConfigSchema_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigSchemaServiceServer).SaveConfigSchema(ctx, req.(*ConfigSchemaSaveRequest))
+		return srv.(ConfigSchemaServiceServer).SaveConfigSchema(ctx, req.(*SaveConfigSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigSchemaService_GetConfigSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConfigSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigSchemaServiceServer).GetConfigSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigSchemaService_GetConfigSchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigSchemaServiceServer).GetConfigSchema(ctx, req.(*GetConfigSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigSchemaService_DeleteConfigSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteConfigSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigSchemaServiceServer).DeleteConfigSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigSchemaService_DeleteConfigSchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigSchemaServiceServer).DeleteConfigSchema(ctx, req.(*DeleteConfigSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigSchemaService_ValidateConfiguration_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateConfigurationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigSchemaServiceServer).ValidateConfiguration(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigSchemaService_ValidateConfiguration_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigSchemaServiceServer).ValidateConfiguration(ctx, req.(*ValidateConfigurationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConfigSchemaService_GetConfigSchemaVersions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfigSchemaVersionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigSchemaServiceServer).GetConfigSchemaVersions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConfigSchemaService_GetConfigSchemaVersions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigSchemaServiceServer).GetConfigSchemaVersions(ctx, req.(*ConfigSchemaVersionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -102,6 +234,22 @@ var ConfigSchemaService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SaveConfigSchema",
 			Handler:    _ConfigSchemaService_SaveConfigSchema_Handler,
+		},
+		{
+			MethodName: "GetConfigSchema",
+			Handler:    _ConfigSchemaService_GetConfigSchema_Handler,
+		},
+		{
+			MethodName: "DeleteConfigSchema",
+			Handler:    _ConfigSchemaService_DeleteConfigSchema_Handler,
+		},
+		{
+			MethodName: "ValidateConfiguration",
+			Handler:    _ConfigSchemaService_ValidateConfiguration_Handler,
+		},
+		{
+			MethodName: "GetConfigSchemaVersions",
+			Handler:    _ConfigSchemaService_GetConfigSchemaVersions_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

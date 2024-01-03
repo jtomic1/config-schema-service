@@ -7,26 +7,86 @@ package configschema;
 import "google/protobuf/timestamp.proto";
 
 service ConfigSchemaService {
-  rpc SaveConfigSchema(ConfigSchemaSaveRequest) returns (ConfigSchemaSaveResponse);
+  rpc SaveConfigSchema(SaveConfigSchemaRequest) returns (SaveConfigSchemaResponse);
+  rpc GetConfigSchema(GetConfigSchemaRequest) returns (GetConfigSchemaResponse);
+  rpc DeleteConfigSchema(DeleteConfigSchemaRequest) returns (DeleteConfigSchemaResponse);
+  rpc ValidateConfiguration(ValidateConfigurationRequest) returns (ValidateConfigurationResponse);
+  rpc GetConfigSchemaVersions(ConfigSchemaVersionsRequest) returns (ConfigSchemaVersionsResponse);
 }
 
 message User {
-  string id = 1;
-  string username = 2;
+  string username = 1;
+  string email = 2;
 }
 
-message ConfigSchemaSaveRequest {
-  google.protobuf.Timestamp creationTime = 1;
-  User user = 2;
-  string namespace = 3;
-  string app_name = 4;
-  string configuration_name = 5;
-  string version = 6;
-  string arch = 7;
-  string json_schema = 8;
+message ConfigSchemaDetails {
+  string namespace = 1;
+  string schema_name = 2;
+  string version = 3;
 }
 
-message ConfigSchemaSaveResponse {
+message ConfigSchemaData {
+  User user = 1;
+  string schema = 2;
+  google.protobuf.Timestamp creation_time = 3;
+}
+
+message ConfigSchema {
+  ConfigSchemaDetails schema_details = 1;
+  ConfigSchemaData schema_data = 2;
+}
+
+message SaveConfigSchemaRequest {
+  User user = 1;
+  ConfigSchemaDetails schema_details = 2;
+  string schema = 3;
+}
+
+message SaveConfigSchemaResponse {
   int32 status = 1;
   string message = 2;
+}
+
+message DeleteConfigSchemaRequest { 
+  User user = 1;
+  ConfigSchemaDetails schema_details = 2;
+}
+
+message DeleteConfigSchemaResponse {
+  int32 status = 1;
+  string message = 2;
+}
+
+message GetConfigSchemaRequest {
+  User user = 1;
+  ConfigSchemaDetails schema_details = 2;
+}
+
+message GetConfigSchemaResponse  {
+  int32 status = 1;
+  string message = 2;
+  ConfigSchemaData schema_data = 3;
+}
+
+message ValidateConfigurationRequest {
+  User user = 1;
+  ConfigSchemaDetails schema_details  = 2;
+  string configuration = 3;
+}
+
+message ValidateConfigurationResponse {
+  int32 status = 1;
+  string message = 2;
+  bool is_valid = 3;
+}
+
+message ConfigSchemaVersionsRequest {
+  User user = 1;
+  ConfigSchemaDetails schema_details = 2;
+}
+
+message ConfigSchemaVersionsResponse {
+  int32 status = 1;
+  string message = 2;
+  repeated ConfigSchema schema_versions = 3;
 }

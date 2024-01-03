@@ -2,12 +2,17 @@ package repository
 
 import (
 	"context"
-	"log"
+	"encoding/json"
+	"errors"
+	"sort"
+	"strings"
 	"time"
 
-	clientv3 "go.etcd.io/etcd/client/v3"
-
 	pb "github.com/jtomic1/config-schema-service/proto"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"golang.org/x/mod/semver"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -24,30 +29,122 @@ func NewClient() (*EtcdRepository, error) {
 		Endpoints:   []string{endpoint},
 		DialTimeout: timeout,
 	})
-	if err != nil {
-		log.Fatal(err)
-	}
 	return &EtcdRepository{
 		client: cli,
-	}, nil
+	}, err
 }
 
 func (repo *EtcdRepository) Close() {
 	repo.client.Close()
 }
 
-func getConfigSchemaKey(req *pb.ConfigSchemaSaveRequest) string {
-	return req.GetNamespace() + "-" + req.GetAppName() + "-" + req.GetConfigurationName() + "-" + req.GetVersion() + "-" + req.GetArch()
+func (repo *EtcdRepository) SaveConfigSchema(key string, user *pb.User, schema string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	res, err := repo.client.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if res.Count > 0 {
+		return errors.New("Key '" + key + "' already exists!")
+	}
+	schemaJson, err := yaml.YAMLToJSON([]byte(schema))
+	if err != nil {
+		return err
+	}
+	schemaData := &pb.ConfigSchemaData{
+		User:         user,
+		Schema:       string(schemaJson),
+		CreationTime: timestamppb.New(time.Now()),
+	}
+	serializedData, err := json.Marshal(schemaData)
+	if err != nil {
+		return err
+	}
+	_, err = repo.client.Put(ctx, key, string(serializedData))
+	return err
 }
 
-func (repo *EtcdRepository) SaveConfigSchema(req *pb.ConfigSchemaSaveRequest) error {
+func (repo *EtcdRepository) GetConfigSchema(key string) (*pb.ConfigSchemaData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	key := getConfigSchemaKey(req)
-	resp, err := repo.client.Put(ctx, key, req.GetJsonSchema())
+	resp, err := repo.client.Get(ctx, key)
 	cancel()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	log.Println(resp)
-	return nil
+	if len(resp.Kvs) == 0 {
+		return nil, nil
+	}
+	var schemaData pb.ConfigSchemaData
+	if err := json.Unmarshal(resp.Kvs[0].Value, &schemaData); err != nil {
+		return nil, err
+	}
+	schemaYaml, err := yaml.JSONToYAML([]byte(schemaData.GetSchema()))
+	if err != nil {
+		return nil, err
+	}
+	schemaData.Schema = string(schemaYaml)
+	return &schemaData, nil
+}
+
+func (repo *EtcdRepository) DeleteConfigSchema(key string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	res, err := repo.client.Delete(ctx, key)
+	if err != nil {
+		return err
+	}
+	if res.Deleted > 0 {
+		return nil
+	}
+	return errors.New("No schema with key '" + key + "' found!")
+}
+
+func (repo *EtcdRepository) GetSchemasByPrefix(prefix string) ([]*pb.ConfigSchema, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	res, err := repo.client.Get(ctx, prefix, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	} else if res.Count == 0 {
+		return nil, nil
+	}
+	schemas := make([]*pb.ConfigSchema, res.Count)
+	for i, schemaKv := range res.Kvs {
+		schemaDetails := getSchemaDetailsFromKey(string(schemaKv.Key))
+		var schemaData pb.ConfigSchemaData
+		if err := json.Unmarshal(schemaKv.Value, &schemaData); err != nil {
+			return nil, err
+		}
+		schemaYaml, err := yaml.JSONToYAML([]byte(schemaData.GetSchema()))
+		if err != nil {
+			return nil, err
+		}
+		schemaData.Schema = string(schemaYaml)
+		schemas[i] = &pb.ConfigSchema{
+			SchemaDetails: schemaDetails,
+			SchemaData:    &schemaData,
+		}
+	}
+	sort.Slice(schemas, func(i, j int) bool {
+		return semver.Compare(schemas[i].GetSchemaDetails().GetVersion(), schemas[j].GetSchemaDetails().GetVersion()) == -1
+	})
+	return schemas, nil
+}
+
+func (repo *EtcdRepository) GetLatestVersionByPrefix(prefix string) (string, error) {
+	schemas, err := repo.GetSchemasByPrefix(prefix)
+	if err != nil {
+		return "", err
+	}
+	return schemas[len(schemas)-1].GetSchemaDetails().GetVersion(), nil
+}
+
+func getSchemaDetailsFromKey(key string) *pb.ConfigSchemaDetails {
+	tokens := strings.Split(key, "/")
+	return &pb.ConfigSchemaDetails{
+		Namespace:  tokens[0],
+		SchemaName: tokens[1],
+		Version:    tokens[2],
+	}
 }
