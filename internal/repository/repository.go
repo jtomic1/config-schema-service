@@ -10,6 +10,7 @@ import (
 
 	pb "github.com/jtomic1/config-schema-service/proto"
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"golang.org/x/mod/semver"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"sigs.k8s.io/yaml"
 )
@@ -126,9 +127,17 @@ func (repo *EtcdRepository) GetSchemasByPrefix(prefix string) ([]*pb.ConfigSchem
 		}
 	}
 	sort.Slice(schemas, func(i, j int) bool {
-		return schemas[i].GetSchemaData().GetCreationTime().AsTime().Before(schemas[j].GetSchemaData().GetCreationTime().AsTime())
+		return semver.Compare(schemas[i].GetSchemaDetails().GetVersion(), schemas[j].GetSchemaDetails().GetVersion()) == -1
 	})
 	return schemas, nil
+}
+
+func (repo *EtcdRepository) GetLatestVersionByPrefix(prefix string) (string, error) {
+	schemas, err := repo.GetSchemasByPrefix(prefix)
+	if err != nil {
+		return "", err
+	}
+	return schemas[len(schemas)-1].GetSchemaDetails().GetVersion(), nil
 }
 
 func getSchemaDetailsFromKey(key string) *pb.ConfigSchemaDetails {

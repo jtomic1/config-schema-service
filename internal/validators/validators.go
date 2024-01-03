@@ -6,6 +6,7 @@ import (
 
 	pb "github.com/jtomic1/config-schema-service/proto"
 	"github.com/xeipuuv/gojsonschema"
+	"golang.org/x/mod/semver"
 	"sigs.k8s.io/yaml"
 )
 
@@ -52,6 +53,8 @@ func AreSchemaDetailsValid(schemaDetails *pb.ConfigSchemaDetails, isVersionRequi
 		return false, errors.New("Schema name cannot be empty!")
 	} else if isVersionRequired && schemaDetails.GetVersion() == "" {
 		return false, errors.New("Schema version cannot be empty!")
+	} else if isVersionRequired && !semver.IsValid(schemaDetails.GetVersion()) {
+		return false, errors.New("Schema version must be a valid SemVer string with 'v' prefix!")
 	} else if strings.Contains(schemaDetails.GetNamespace(), "/") || strings.Contains(schemaDetails.GetSchemaName(), "/") || strings.Contains(schemaDetails.GetVersion(), "/") {
 		return false, errors.New("Schema details must not contain '/'!")
 	}

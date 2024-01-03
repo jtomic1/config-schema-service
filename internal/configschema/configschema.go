@@ -7,6 +7,7 @@ import (
 	"github.com/jtomic1/config-schema-service/internal/validators"
 	pb "github.com/jtomic1/config-schema-service/proto"
 	"github.com/xeipuuv/gojsonschema"
+	"golang.org/x/mod/semver"
 	"sigs.k8s.io/yaml"
 )
 
@@ -46,6 +47,19 @@ func (s *Server) SaveConfigSchema(ctx context.Context, in *pb.SaveConfigSchemaRe
 		return &pb.SaveConfigSchemaResponse{
 			Status:  13,
 			Message: "Error while instantiating database client!",
+		}, nil
+	}
+	latestVersion, err := repoClient.GetLatestVersionByPrefix(getConfigSchemaPrefix(in.GetSchemaDetails()))
+	if err != nil {
+		return &pb.SaveConfigSchemaResponse{
+			Status:  13,
+			Message: err.Error(),
+		}, nil
+	}
+	if semver.Compare(in.GetSchemaDetails().GetVersion(), latestVersion) != 1 {
+		return &pb.SaveConfigSchemaResponse{
+			Status:  3,
+			Message: "Provided version is not latest! Please provide a version that succeeds '" + latestVersion + "'!",
 		}, nil
 	}
 	err = repoClient.SaveConfigSchema(getConfigSchemaKey(in.GetSchemaDetails()), in.GetUser(), in.GetSchema())
