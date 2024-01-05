@@ -105,7 +105,7 @@ Response:
 }
 ```
 
-#### <a name="missing-fields-example"></a>Example 4 - Missing Mandatory Fields
+#### Example 4 - Missing Mandatory Fields
 In the following example, the **user** field is omitted from the request. Since it is a mandatory field, the server will reject this request.
 
 Request:
@@ -462,7 +462,7 @@ Response:
 }
 ```
 <br>
-Omitting a required field is handled in the same manner as in [previous endpoints](#missing-fields-example). Naturally, the "is_valid" field in this case is always going to be false.
+Omitting a required field is handled in the same manner as in previous endpoints. Naturally, the "is_valid" field in this case is always going to be false.
 
 ## ConfigSchemaService/GetConfigSchemaVersions
 This procedure is used to retrieve all schemas under the given namespace and schema name. Schema array in the response is sorted in ascending order with respect to schemas' semantic version.
@@ -584,7 +584,7 @@ Response:
 }
 ```
 <br>
-Omitting a required field is handled in the same manner as in [previous endpoints](#missing-fields-example). Naturally, the "schema_versions" field in this case is always going to be an empty array.
+Omitting a required field is handled in the same manner as in previous endpoints. Naturally, the "schema_versions" field in this case is always going to be an empty array.
 
 ## Custom Types
 This section further describes custom types and messages which are defined in the service.
