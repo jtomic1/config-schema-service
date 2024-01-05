@@ -10,6 +10,34 @@ The following remote procedures are available:
  - **ConfigSchemaService/ValidateConfiguration**
  - **ConfigSchemaService/GetConfigSchemaVersions**
 
+## Installation Guide
+
+Prerequisites:
+ - Go 1.20: Ensure you have Go version 1.20 installed on your machine. You can download and install it from the [official Go website](https://go.dev/).
+ - etcd: Install and run etcd, the distributed key-value store. [Installation guide](https://etcd.io/docs/v3.5/install/)
+
+Installation:
+ 1. Clone this repository.
+ 2. Navigate to the following location
+    ```
+    cd <repository_directory>\cmd\server
+    ```
+ 3. Start etcd using the appropriate commands for your operating system. For example:
+    ```
+    etcd
+    ```
+ 4. Run the server by double-clicking server.exe or running the command
+    ```
+    ./server.go
+    ```
+Once the Go application is running, the service will be available.
+
+*Notes*
+
+ - Ensure etcd is running and accessible at localhost:2379 before starting the Go application.
+ - The default port for the server is 50051
+
+
 ## ConfigSchemaService/SaveConfigSchema
 This procedure is used to create a new schema. 
 ### Request
