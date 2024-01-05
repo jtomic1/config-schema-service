@@ -132,6 +132,10 @@ Currently, only one character is considered illegal when providing schema detail
 Request:
 ```json 
 {
+  "user": {
+    "username": "johndoe",
+    "email": "johndoe@example.com"
+  },
   "schema_details": {
     "namespace": "my/namespace",
     "schema_name": "person_address_schema",
