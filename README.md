@@ -155,6 +155,10 @@ Response:
 The value provided for the schema version must adhere to certain rules. Check out [ConfigSchemaDetails](#config-schema-details) section for more information about the restrictions imposed on this field. The following example provides an ordinary integer in the version field, which is invalid since it doesn't have the "v" prefix.
 ```json 
 {
+  "user": {
+    "username": "johndoe",
+    "email": "johndoe@example.com"
+  },
   "schema_details": {
     "namespace": "my_namespace",
     "schema_name": "person_address_schema",
