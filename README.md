@@ -28,7 +28,7 @@ Installation:
     ```
  4. Run the server by double-clicking server.exe or running the command
     ```
-    ./server.go
+    ./server.exe
     ```
 Once the Go application is running, the service will be available.
 
