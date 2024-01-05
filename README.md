@@ -592,6 +592,7 @@ This section further describes custom types and messages which are defined in th
 | namespace    | string | Cannot be empty<br>Cannot contain "/"| Namespace which the schema belongs to|
 | schema_name   | string | Cannot be empty<br>Cannot contain "/" | Schema name |
 |version|string|Cannot be empty*<br>Cannot contain "/"<br>Must be a valid SemVer string with "v" prefix [(more info about accepted version inputs)](https://pkg.go.dev/golang.org/x/mod/semver#pkg-overview)|Schema version|
+
 **Note: Version CAN be omitted when sending a request to **ConfigSchemaService/GetConfigSchemaVersions** endpoint*
 
 ---
