@@ -137,6 +137,9 @@ func (repo *EtcdRepository) GetLatestVersionByPrefix(prefix string) (string, err
 	if err != nil {
 		return "", err
 	}
+	if len(schemas) == 0 {
+		return "", nil
+	}
 	return schemas[len(schemas)-1].GetSchemaDetails().GetVersion(), nil
 }
 

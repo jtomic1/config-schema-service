@@ -56,7 +56,7 @@ func (s *Server) SaveConfigSchema(ctx context.Context, in *pb.SaveConfigSchemaRe
 			Message: err.Error(),
 		}, nil
 	}
-	if semver.Compare(in.GetSchemaDetails().GetVersion(), latestVersion) != 1 {
+	if latestVersion != "" && semver.Compare(in.GetSchemaDetails().GetVersion(), latestVersion) != 1 {
 		return &pb.SaveConfigSchemaResponse{
 			Status:  3,
 			Message: "Provided version is not latest! Please provide a version that succeeds '" + latestVersion + "'!",
